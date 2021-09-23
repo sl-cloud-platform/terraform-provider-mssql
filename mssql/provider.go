@@ -31,7 +31,7 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"mssql_database": resourceDatabase(),
-			"mssql_role":     resourceRole(),
+			"mssql_user":     resourceUser(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{},
 		ConfigureFunc:  providerConfigure,

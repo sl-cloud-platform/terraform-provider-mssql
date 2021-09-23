@@ -10,10 +10,10 @@ provider "mssql" {
 
 resource "mssql_database" "db" {
   name = "MyDatabase"
-  owner = "${mssql_role.user.name}"
 }
 
-resource "mssql_role" "user" {
+resource "mssql_user" "user" {
+  database = mssql_database.db.name 
   name = "MyUser"
   password = "MyPassword"
 }

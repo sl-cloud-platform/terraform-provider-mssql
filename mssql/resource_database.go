@@ -14,10 +14,6 @@ func resourceDatabase() *schema.Resource {
 		Delete: resourceDatabaseDelete,
 
 		Schema: map[string]*schema.Schema{
-			"owner": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -29,22 +25,20 @@ func resourceDatabase() *schema.Resource {
 func resourceDatabaseCreate(d *schema.ResourceData, m interface{}) error {
 	db := m.(*sql.DB)
 	name := d.Get("name").(string)
-	_, err := db.Query(fmt.Sprintf("CREATE DATABASE %s", name))
-	if err != nil {
-		return err
-	}
+
 	row, err := checkTable(db, name)
-	if err != nil {
-		return err
-	}
-	d.SetId(row.name)
-	if d.Get("owner") != nil {
-		owner := d.Get("owner").(string)
-		_, err := db.Query(fmt.Sprintf("ALTER AUTHORIZATION ON DATABASE::%s TO %s", name, owner))
+	// only try to create database if it not exists
+	if err == sql.ErrNoRows {
+		_, err := db.Query(fmt.Sprintf("CREATE DATABASE %s", name))
 		if err != nil {
 			return err
 		}
 	}
+	row, err = checkTable(db, name)
+	if err != nil {
+		return err
+	}
+	d.SetId(row.name)
 
 	return err
 }
@@ -84,8 +78,10 @@ func resourceDatabaseUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceDatabaseDelete(d *schema.ResourceData, m interface{}) error {
-	db := m.(*sql.DB)
-	name := d.Id()
-	_, err := db.Query(fmt.Sprintf("DROP DATABASE %s", name))
-	return err
+	// TODO flag if DB should be deleted on destroy
+	//db := m.(*sql.DB)
+	//name := d.Id()
+	//_, err := db.Query(fmt.Sprintf("DROP DATABASE %s", name))
+	//return err
+	return nil
 }
