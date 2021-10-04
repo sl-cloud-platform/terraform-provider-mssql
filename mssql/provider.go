@@ -1,9 +1,11 @@
 package mssql
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	_ "github.com/denisenkom/go-mssqldb"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"net/url"
 )
@@ -34,11 +36,11 @@ func Provider() *schema.Provider {
 			"mssql_user":     resourceUser(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{},
-		ConfigureFunc:  providerConfigure,
+		ConfigureContextFunc:  providerConfigure,
 	}
 }
 
-func providerConfigure(d *schema.ResourceData) (interface{}, error) {
+func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	username := d.Get("username").(string)
 	password := d.Get("password").(string)
 	u := &url.URL{
@@ -47,5 +49,12 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		Host:   fmt.Sprintf("%s:%d", d.Get("host"), d.Get("port")),
 	}
 
-	return sql.Open("sqlserver", u.String())
+	db, err := sql.Open("sqlserver", u.String())
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
+
+	return db, nil
+
 }
+
