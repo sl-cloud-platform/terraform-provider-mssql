@@ -15,11 +15,11 @@ func resourceDatabase() *schema.Resource {
 		ReadContext:   resourceDatabaseRead,
 		UpdateContext: resourceDatabaseUpdate,
 		DeleteContext: resourceDatabaseDelete,
-
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"drop_on_destroy": {
 				Type:     schema.TypeBool,
@@ -78,21 +78,9 @@ func resourceDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceDatabaseDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	dropOnDestroy := d.Get("drop_on_destroy").(bool)
-	name := d.Id()
-
-	//return errors.New(name)
-
-	// TODO fix drop database, raises this error sometimes: Error: mssql: Warning: Fatal error 615 occurred at Sep 23 2021 12:18PM. Note the error and time, and contact your system administrator.
-	//USE [master]
-	//GO
-	//ALTER DATABASE [Beratungsmappe] SET SINGLE_USER WITH ROLLBACK IMMEDIATE
-	//GO
-	//USE [master]
-	//GO
-	//DROP DATABASE [Beratungsmappe]
-	//GO
 
 	if dropOnDestroy {
+		name := d.Id()
 		db := m.(*sql.DB)
 		row, err := checkDatabase(db, name)
 		if err != nil && err != sql.ErrNoRows {
@@ -100,10 +88,14 @@ func resourceDatabaseDelete(ctx context.Context, d *schema.ResourceData, m inter
 		}
 
 		if row != nil {
-
-			_, err := db.Exec(fmt.Sprintf("DROP DATABASE %s", name))
+			_, err = db.Query(fmt.Sprintf("exec('USE master; ALTER DATABASE %s SET SINGLE_USER WITH ROLLBACK IMMEDIATE')", name))
 			if err != nil {
-				return diag.FromErr(errors.New(fmt.Sprint("Failed to drop database", err)))
+				return diag.FromErr(errors.New(fmt.Sprint("Failed to set database to single user mode for dropping database: ", err)))
+			}
+
+			_, err := db.Exec(fmt.Sprintf("exec('USE master; DROP DATABASE %s')", name))
+			if err != nil {
+				return diag.FromErr(errors.New(fmt.Sprint("Failed to drop database: ", err)))
 			}
 		}
 	}
