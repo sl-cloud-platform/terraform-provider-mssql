@@ -7,5 +7,5 @@ provider_path=registry.terraform.io/sl-cloud-platform/mssql/"$provider_version"/
 
 go build -o terraform-provider-mssql_"$provider_version"
 
-mkdir -p ~/Library/Application\ Support/io.terraform/plugins/"$provider_path"
-cp terraform-provider-mssql_"$provider_version"  ~/Library/Application\ Support/io.terraform/plugins/"$provider_path"
+#mkdir -p ~/Library/Application\ Support/io.terraform/plugins/"$provider_path"
+#cp terraform-provider-mssql_"$provider_version"  ~/Library/Application\ Support/io.terraform/plugins/"$provider_path"
